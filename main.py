@@ -36,12 +36,19 @@ def pixtomap(pix):
     return coordinate
 
 def search_climate_value(rasterfile):
-    band = gdata.GetRasterBand(1)
-    nodata = band.GetNoDataValue()
-
+    global gt
+    gdata = gdal.Open(rasterfile)
     gt = gdata.GetGeoTransform()
+    band = gdata.GetRasterBand(1)
+    nodata = band.GetNoDataValue()    
     data = gdata.ReadAsArray().astype(np.float)
-    gdata = None    
+    gdata = None   
+    masked_data = ma.masked_values(data, nodata, copy=False) # mask no value data
+    masked_data.fill_value = nodata
+    ddd = np.around(masked_data, decimals=3) # numbers after ,
+    search_pix = zip(*np.where(ddd == -6.355)) # search pixel cootdinates
+    for pix in search_pix:
+        print pixtomap(pix)     
     
 # WorldClim data tiff processing:
 
@@ -54,6 +61,7 @@ def ext_data():
             res.append(result)    
         result_data.append((val, res))
     return result_data
+    
 # Prettytable output:
 def output_table(extdata):
     mgen_names = [calendar.month_name[x] for x in range(1,13)]
@@ -64,5 +72,5 @@ def output_table(extdata):
     print(city)
     print(table)
 
-output_table(ext_data())
-
+#output_table(ext_data())
+search_climate_value('data/tavg/wc2.0_5m_tavg_01.tif')
