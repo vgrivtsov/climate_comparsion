@@ -54,10 +54,11 @@ def search_climate_value(rasterfile):
 
 def ext_data():
     result_data = []
-    for val in sorted(os.listdir(path)): # list of datasets by climate values
+    val_dataset = sorted(os.listdir(path))
+    for val in val_dataset: # list of datasets by climate values
         res = []
         for m in [x for x in range(1,13)]: #get data by month(from datasets like wc2.0_5m_tmax_01.tif) 
-            result = get_value_at_point('data/%s/wc2.0_5m_%s_%s.tif' % (val, val, '{:02d}'.format(m)), p) # p -position     
+            result = get_value_at_point('data/%s/wc2.0_5m_%s_%02d.tif' % (val, val, m), p) # p -position     
             res.append(result)    
         result_data.append((val, res))
     return result_data
