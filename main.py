@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#from IPython.core.display import display, HTML #HTML output for ipython notebook
 from osgeo import gdal
 from geopy.geocoders import Nominatim
 from collections import OrderedDict
 from prettytable import PrettyTable
+from prettytable import from_html
 import calendar
 import os
 import numpy as np
+from numpy import ma
 
 path = 'data'
-city = 'Moscow'
+city = 'Arambol'
 g = Nominatim().geocode(city, timeout=5)
 p = (g.longitude, g.latitude)
 
@@ -26,22 +29,40 @@ def get_value_at_point(rasterfile, pos):
     y = int((pos[1] - gt[3])/gt[5])
 
     return data[y, x]
+# get geolocation from pixel coordinate
+def pixtomap(pix):
+    coordinate = (gt[3] + pix[1] * gt[4] + pix[0] * gt[5],
+                  gt[0] + pix[1] * gt[1] + pix[0] * gt[2])
+    return coordinate
 
+def search_climate_value(rasterfile):
+    band = gdata.GetRasterBand(1)
+    nodata = band.GetNoDataValue()
+
+    gt = gdata.GetGeoTransform()
+    data = gdata.ReadAsArray().astype(np.float)
+    gdata = None    
+    
 # WorldClim data tiff processing:
 
-result_data = []
-for val in sorted(os.listdir(path)): # list of datasets by climate values
-    res = []
-    for m in [x for x in range(1,13)]: #get data by month(from datasets like wc2.0_5m_tmax_01.tif) 
-        result = get_value_at_point('data/%s/wc2.0_5m_%s_%s.tif' % (val, val, '{:02d}'.format(m)), p) # p -position     
-        res.append(result)    
-    result_data.append((val, res))
-
+def ext_data():
+    result_data = []
+    for val in sorted(os.listdir(path)): # list of datasets by climate values
+        res = []
+        for m in [x for x in range(1,13)]: #get data by month(from datasets like wc2.0_5m_tmax_01.tif) 
+            result = get_value_at_point('data/%s/wc2.0_5m_%s_%s.tif' % (val, val, '{:02d}'.format(m)), p) # p -position     
+            res.append(result)    
+        result_data.append((val, res))
+    return result_data
 # Prettytable output:
+def output_table(extdata):
+    mgen_names = [calendar.month_name[x] for x in range(1,13)]
+    table = PrettyTable()
+    table.add_column("Month", mgen_names)
+    for k in extdata:    
+        table.add_column(k[0],k[1])
+    print(city)
+    print(table)
 
-mgen_names = [calendar.month_name[x] for x in range(1,13)]
-table = PrettyTable()
-table.add_column("Month", mgen_names)
-for k in result_data:    
-    table.add_column(k[0],k[1])
-print(table)
+output_table(ext_data())
+
