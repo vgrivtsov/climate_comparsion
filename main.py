@@ -54,8 +54,8 @@ def search_climate_value(rasterfile, x_value):
     masked_data.fill_value = nodata
     d_values = np.around(masked_data, decimals=bit_value) # bit number of values
     search_pix = zip(*np.where(d_values == x_value)) # search pixel cootdinates
-    for pix in search_pix:
-        return pixtomap(pix)     
+    #print search_pix
+    return map(pixtomap, search_pix)   
     
     
 # WorldClim data tiff processing:
@@ -80,26 +80,35 @@ def output_table(extdata):
         table.add_column(k[0],k[1])
     print(city, position)
     print(table)
-    
     return extdata
+    #HTML output for ipython notebook
+    #htmltable = table.get_html_string()
+    #display(HTML(htmltable))
 
 
-def comparsion_climate(result_data):
-    result_data = result_data[0]
-    val_dataset = result_data[1]
+def comparsion_climate(data):
     comparsion_result = []
+    result_data = data[0]    
+    val_dataset = data[1]
+    
     for val in result_data: # list of datasets by climate values
-        if val[0] in val_dataset: # val[0] - name of climat value
-            
+        if val[0] in val_dataset: # val[0] - name of climat value            
             res = []
             for month_val in val[1]: # val[1] - monthly climate result for origin location
-                m_index = val[1].index(month_val)+1 # indexes of value in reault_data
+                m_index = val[1].index(month_val)+1 # indexes of value in result_data
                 result = search_climate_value('data/%s/wc2.0_5m_%s_%02d.tif' % (val[0], val[0], m_index), month_val)
-                res.append(result)
+                res.append((result, month_val, calendar.month_name[m_index]))
          
             comparsion_result.append((val[0], res))
+
     return comparsion_result
 
-output_table(ext_data()) # ext_data()[0] - result of search climate values
-for result in comparsion_climate(output_table(ext_data())):
-    print result
+output = output_table(ext_data())
+for r in comparsion_climate(output):
+    if r != None:
+        print r[0].upper()
+        print "-"*74
+        for c in r[1]:
+            print c
+        print "-"*74
+
